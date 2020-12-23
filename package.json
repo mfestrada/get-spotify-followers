@@ -1,0 +1,11 @@
+{
+  "name": "get-spotify-followers",
+  "version": "0.0.1",
+  "description": "monitors spotify profile for new followers",
+  "main": "main.js",
+  "author": "deez",
+  "license": "MIT",
+  "dependencies": {
+    "node-fetch": "^2.6.1"
+  }
+}
