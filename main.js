@@ -4,7 +4,8 @@ const client_secret = (process.env.CLIENT_SECRET) ? process.env.CLIENT_SECRET : 
 const spotify_user_endpoint = (process.env.SPOTIFY_USER_ENDPOINT) ? process.env.SPOTIFY_USER_ENDPOINT : undefined
 
 if (!process.env.CLIENT_ID | !process.env.CLIENT_SECRET | !process.env.SPOTIFY_USER_ENDPOINT) {
-  process.exit(1)
+  console.error("ERROR! $CLIENT_ID, $CLIENT_SECRET and $SPOTIFY_USER_ENDPOINT are not set!")
+  process.exit(2)
 }
 
 console.log(`CLIENT_ID: ${client_id}`);
@@ -13,17 +14,24 @@ console.log(`SPOTIFY_USER_ENDPOINT: ${spotify_user_endpoint}`);
 
 // run script
 (async () => {
-  await main(client_id, client_secret, spotify_user_endpoint)
+  try {
+    await main(spotify_user_endpoint)
+  } catch (e) {
+    console.error(e)
+    process.exit(99)
+  }
 })();
 
-async function main(client_id, client_secret, spotify_user_url) {
-  let token = await getAccessToken(client_id, client_secret)
-  let user = await getUser(token, spotify_user_url)
-  await getFollowerTotal({
-    access_token: token,
-    url: spotify_user_url,
-    user, user
-  })
+async function main(spotify_user_url) {
+  setInterval(async () => {
+    let token = await getAccessToken(client_id, client_secret)
+    let user = await getUser(token, spotify_user_url)
+    await getFollowerTotal({
+      access_token: token,
+      url: spotify_user_url,
+      user: user
+    })
+  }, 30000)
 }
 
 async function getAccessToken(client_id, client_secret) {
@@ -53,14 +61,6 @@ async function getUser(access_token, url) {
 }
 
 async function getFollowerTotal(x) {
-  let latest = await getUser(x.access_token, x.url)
-  console.log(`INFO: refreshing... highest: ${x.user.followers.total}, current: ${latest.followers.total}`)
-
-  if (latest.followers.total <= x.user.followers.total) {
-    await getFollowerTotal(x)
-  } else {
-    console.log(`ADDED: new follower total: ${latest.followers.total}`)
-    x.user = latest
-    await getFollowerTotal(x)
-  }
+  let user = await getUser(x.access_token, x.url)
+  console.log(`INFO: follower total: ${x.user.followers.total}`);
 }
