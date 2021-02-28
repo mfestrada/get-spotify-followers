@@ -2,6 +2,7 @@ const fetch = require('node-fetch')
 const client_id = (process.env.CLIENT_ID) ? process.env.CLIENT_ID : undefined
 const client_secret = (process.env.CLIENT_SECRET) ? process.env.CLIENT_SECRET : undefined
 const spotify_user_endpoint = (process.env.SPOTIFY_USER_ENDPOINT) ? process.env.SPOTIFY_USER_ENDPOINT : undefined
+let TOKEN, USER
 
 if (!process.env.CLIENT_ID | !process.env.CLIENT_SECRET | !process.env.SPOTIFY_USER_ENDPOINT) {
   console.error("ERROR! $CLIENT_ID, $CLIENT_SECRET and $SPOTIFY_USER_ENDPOINT are not set!")
@@ -23,18 +24,20 @@ console.log(`SPOTIFY_USER_ENDPOINT: ${spotify_user_endpoint}`);
 })();
 
 async function main(spotify_user_url) {
+  TOKEN = await getAccessToken()
+  USER = await getUser(TOKEN, spotify_user_url)
+  console.log(`INFO: original follower total: ${USER.followers.total}`);
+
   setInterval(async () => {
-    let token = await getAccessToken(client_id, client_secret)
-    let user = await getUser(token, spotify_user_url)
+    TOKEN = await getAccessToken()
     await getFollowerTotal({
-      access_token: token,
-      url: spotify_user_url,
-      user: user
+      access_token: TOKEN,
+      url: spotify_user_url
     })
   }, 30000)
 }
 
-async function getAccessToken(client_id, client_secret) {
+async function getAccessToken() {
   let data = await fetch("https://accounts.spotify.com/api/token?grant_type=client_credentials", {
     method: 'POST',
     headers: {
@@ -61,6 +64,13 @@ async function getUser(access_token, url) {
 }
 
 async function getFollowerTotal(x) {
-  let user = await getUser(x.access_token, x.url)
-  console.log(`INFO: follower total: ${x.user.followers.total}`);
+  let latest = await getUser(x.access_token, x.url)
+  if (USER.followers.total < latest.followers.total) {
+    USER = latest
+    console.log(`ADDED: ${USER.followers.total}`)
+  }
+  if (USER.followers.total > latest.followers.total) {
+    USER = latest
+    console.log(`REMOVED: ${USER.followers.total}`)
+  }
 }
