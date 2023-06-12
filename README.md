@@ -2,6 +2,8 @@
 
 Script monitors a Spotify user endpoint for follower updates, while logging updates to the console.
 
+*Update 05/03/2023:* It looks like the Spotify API has updated so that `followers.total` is now cached, so this needs to be reworked a little for better results. This cached value is displayed after each interval, instead of the current follower total. You can verify this by comparing the value reported by Spotify mobile clients to the one from the REST call made in the script.
+
 ## Environment Variables
 
 The following environment variables are required for the script to run:
